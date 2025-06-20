@@ -1,0 +1,15 @@
+export {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+  SimpleAvatar,
+  AvatarGroup,
+  AvatarWithStatus,
+  avatarVariants,
+  type AvatarProps,
+  type AvatarImageProps,
+  type AvatarFallbackProps,
+  type SimpleAvatarProps,
+  type AvatarGroupProps,
+  type AvatarWithStatusProps,
+} from './avatar'

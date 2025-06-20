@@ -1,0 +1,17 @@
+export {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+  SimpleAccordion,
+  FAQAccordion,
+  accordionVariants,
+  type AccordionProps,
+  type AccordionItemProps,
+  type AccordionTriggerProps,
+  type AccordionContentProps,
+  type SimpleAccordionProps,
+  type FAQAccordionProps,
+  type AccordionData,
+  type FAQItem,
+} from './accordion'
