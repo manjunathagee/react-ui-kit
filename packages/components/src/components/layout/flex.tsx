@@ -68,7 +68,7 @@ const flexVariants = cva('flex', {
 export interface FlexProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof flexVariants> {
-  as?: keyof JSX.IntrinsicElements
+  as?: keyof React.JSX.IntrinsicElements
 }
 
 const Flex = React.forwardRef<HTMLDivElement, FlexProps>(

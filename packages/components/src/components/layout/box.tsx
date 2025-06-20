@@ -184,7 +184,7 @@ const boxVariants = cva('', {
 export interface BoxProps
   extends React.HTMLAttributes<HTMLElement>,
     VariantProps<typeof boxVariants> {
-  as?: keyof JSX.IntrinsicElements
+  as?: keyof React.JSX.IntrinsicElements
 }
 
 const Box = React.forwardRef<HTMLElement, BoxProps>(

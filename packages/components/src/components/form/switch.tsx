@@ -135,7 +135,7 @@ const SwitchGroup: React.FC<SwitchGroupProps> = ({
       {React.Children.map(children, (child) => {
         if (React.isValidElement(child)) {
           return React.cloneElement(child as React.ReactElement<any>, {
-            disabled: disabled || child.props.disabled,
+            disabled: disabled || (child.props as any).disabled,
           })
         }
         return child

@@ -46,7 +46,7 @@ const stackVariants = cva('flex', {
 export interface StackProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof stackVariants> {
-  as?: keyof JSX.IntrinsicElements
+  as?: keyof React.JSX.IntrinsicElements
   divider?: React.ReactNode
 }
 

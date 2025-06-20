@@ -169,14 +169,14 @@ const CheckboxGroup: React.FC<CheckboxGroupProps> = ({
     >
       {React.Children.map(children, (child) => {
         if (React.isValidElement(child) && child.type === CheckboxWithLabel) {
-          const itemValue = child.props.value
+          const itemValue = (child.props as any).value
           const isChecked = value.includes(itemValue)
           
           return React.cloneElement(child as React.ReactElement<any>, {
             checked: isChecked,
             onCheckedChange: (checked: boolean) => 
               handleValueChange(itemValue, checked),
-            disabled: disabled || child.props.disabled,
+            disabled: disabled || (child.props as any).disabled,
           })
         }
         return child
