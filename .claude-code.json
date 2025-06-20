@@ -1,0 +1,6 @@
+{
+  "autoApprove": true,
+  "confirmFileOperations": false,
+  "confirmScriptExecution": false,
+  "confirmDirectoryCreation": false
+}

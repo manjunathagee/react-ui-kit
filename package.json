@@ -1,0 +1,40 @@
+{
+  "name": "react-ui-kit",
+  "version": "0.1.0",
+  "description": "A comprehensive React TypeScript component library",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --filter=@react-ui-kit/components",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "test:watch": "turbo run test:watch",
+    "storybook": "cd packages/components && npm run storybook",
+    "build-storybook": "cd packages/components && npm run build-storybook",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "turbo run build --filter=@react-ui-kit/* && changeset publish",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.26.2",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
+    "turbo": "^1.10.16"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,css}": [
+      "prettier --write"
+    ]
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+}
