@@ -123,10 +123,11 @@ export interface ToastOptions {
   action?: ToastActionElement
   variant?: 'default' | 'destructive' | 'success' | 'warning' | 'info'
   duration?: number
+  open?: boolean
 }
 
 interface ToastState {
-  toasts: (ToastOptions & { id: string })[]
+  toasts: (ToastOptions & { id: string; open: boolean })[]
 }
 
 const toastState: ToastState = {
@@ -134,6 +135,7 @@ const toastState: ToastState = {
 }
 
 let listeners: Array<(state: ToastState) => void> = []
+let toastTimeouts: Map<string, ReturnType<typeof setTimeout>> = new Map()
 
 function dispatch(action: { type: 'ADD_TOAST' | 'DISMISS_TOAST' | 'REMOVE_TOAST'; payload: any }) {
   switch (action.type) {
@@ -144,9 +146,19 @@ function dispatch(action: { type: 'ADD_TOAST' | 'DISMISS_TOAST' | 'REMOVE_TOAST'
       toastState.toasts = toastState.toasts.map((toast) =>
         toast.id === action.payload.id ? { ...toast, open: false } : toast
       )
+      // Remove toast after animation duration
+      setTimeout(() => {
+        dispatch({ type: 'REMOVE_TOAST', payload: action.payload })
+      }, 150) // Animation duration
       break
     case 'REMOVE_TOAST':
       toastState.toasts = toastState.toasts.filter((toast) => toast.id !== action.payload.id)
+      // Clear timeout if exists
+      const timeout = toastTimeouts.get(action.payload.id)
+      if (timeout) {
+        clearTimeout(timeout)
+        toastTimeouts.delete(action.payload.id)
+      }
       break
   }
   
@@ -167,7 +179,7 @@ function useToast() {
   }, [])
 
   const toast = React.useCallback((options: ToastOptions) => {
-    const id = Math.random().toString(36).substr(2, 9)
+    const id = Math.random().toString(36).substring(2, 11)
     
     dispatch({
       type: 'ADD_TOAST',
@@ -181,12 +193,13 @@ function useToast() {
     // Auto dismiss after duration
     const duration = options.duration ?? 5000
     if (duration > 0) {
-      setTimeout(() => {
+      const timeout = setTimeout(() => {
         dispatch({
           type: 'DISMISS_TOAST',
           payload: { id },
         })
       }, duration)
+      toastTimeouts.set(id, timeout)
     }
 
     return id
@@ -216,14 +229,86 @@ function useToast() {
 
 // Convenience functions
 const toast = {
-  success: (options: Omit<ToastOptions, 'variant'>) => 
-    dispatch({ type: 'ADD_TOAST', payload: { ...options, variant: 'success', id: Math.random().toString(36).substr(2, 9), open: true } }),
-  error: (options: Omit<ToastOptions, 'variant'>) => 
-    dispatch({ type: 'ADD_TOAST', payload: { ...options, variant: 'destructive', id: Math.random().toString(36).substr(2, 9), open: true } }),
-  warning: (options: Omit<ToastOptions, 'variant'>) => 
-    dispatch({ type: 'ADD_TOAST', payload: { ...options, variant: 'warning', id: Math.random().toString(36).substr(2, 9), open: true } }),
-  info: (options: Omit<ToastOptions, 'variant'>) => 
-    dispatch({ type: 'ADD_TOAST', payload: { ...options, variant: 'info', id: Math.random().toString(36).substr(2, 9), open: true } }),
+  success: (options: Omit<ToastOptions, 'variant'>) => {
+    const id = Math.random().toString(36).substring(2, 11)
+    const payload = { ...options, variant: 'success' as const, id, open: true }
+    dispatch({ type: 'ADD_TOAST', payload })
+    
+    const duration = options.duration ?? 5000
+    if (duration > 0) {
+      const timeout = setTimeout(() => {
+        dispatch({ type: 'DISMISS_TOAST', payload: { id } })
+      }, duration)
+      toastTimeouts.set(id, timeout)
+    }
+    
+    return id
+  },
+  error: (options: Omit<ToastOptions, 'variant'>) => {
+    const id = Math.random().toString(36).substring(2, 11)
+    const payload = { ...options, variant: 'destructive' as const, id, open: true }
+    dispatch({ type: 'ADD_TOAST', payload })
+    
+    const duration = options.duration ?? 5000
+    if (duration > 0) {
+      const timeout = setTimeout(() => {
+        dispatch({ type: 'DISMISS_TOAST', payload: { id } })
+      }, duration)
+      toastTimeouts.set(id, timeout)
+    }
+    
+    return id
+  },
+  warning: (options: Omit<ToastOptions, 'variant'>) => {
+    const id = Math.random().toString(36).substring(2, 11)
+    const payload = { ...options, variant: 'warning' as const, id, open: true }
+    dispatch({ type: 'ADD_TOAST', payload })
+    
+    const duration = options.duration ?? 5000
+    if (duration > 0) {
+      const timeout = setTimeout(() => {
+        dispatch({ type: 'DISMISS_TOAST', payload: { id } })
+      }, duration)
+      toastTimeouts.set(id, timeout)
+    }
+    
+    return id
+  },
+  info: (options: Omit<ToastOptions, 'variant'>) => {
+    const id = Math.random().toString(36).substring(2, 11)
+    const payload = { ...options, variant: 'info' as const, id, open: true }
+    dispatch({ type: 'ADD_TOAST', payload })
+    
+    const duration = options.duration ?? 5000
+    if (duration > 0) {
+      const timeout = setTimeout(() => {
+        dispatch({ type: 'DISMISS_TOAST', payload: { id } })
+      }, duration)
+      toastTimeouts.set(id, timeout)
+    }
+    
+    return id
+  },
+}
+
+const Toaster = () => {
+  const { toasts } = useToast()
+
+  return (
+    <ToastProvider>
+      {toasts.map(({ id, title, description, action, variant, ...props }) => (
+        <Toast key={id} variant={variant} {...props}>
+          <div className="grid gap-1">
+            {title && <ToastTitle>{title}</ToastTitle>}
+            {description && <ToastDescription>{description}</ToastDescription>}
+          </div>
+          {action}
+          <ToastClose />
+        </Toast>
+      ))}
+      <ToastViewport />
+    </ToastProvider>
+  )
 }
 
 export {
@@ -239,4 +324,5 @@ export {
   useToast,
   toast,
   toastVariants,
+  Toaster,
 }
