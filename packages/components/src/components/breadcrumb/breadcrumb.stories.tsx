@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import { 
+import * as React from 'react'
+import {
   Breadcrumb,
   BreadcrumbList,
   BreadcrumbItem,
@@ -35,7 +36,9 @@ export const Default: Story = {
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbLink href="/products/electronics">Electronics</BreadcrumbLink>
+          <BreadcrumbLink href="/products/electronics">
+            Electronics
+          </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
@@ -202,32 +205,62 @@ export const SimpleBreadcrumbStory: Story = {
         <h3 className="text-lg font-semibold mb-2">With Icons</h3>
         <SimpleBreadcrumb
           items={[
-            { 
-              label: 'Dashboard', 
+            {
+              label: 'Dashboard',
               href: '/dashboard',
               icon: (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                  />
                 </svg>
-              )
+              ),
             },
-            { 
-              label: 'Projects', 
+            {
+              label: 'Projects',
               href: '/projects',
               icon: (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                  />
                 </svg>
-              )
+              ),
             },
-            { 
-              label: 'React UI Kit', 
+            {
+              label: 'React UI Kit',
               current: true,
               icon: (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
                 </svg>
-              )
+              ),
             },
           ]}
         />
@@ -240,7 +273,9 @@ export const WithOverflow: Story = {
   render: () => (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold mb-2">Max 4 Items (Auto Ellipsis)</h3>
+        <h3 className="text-lg font-semibold mb-2">
+          Max 4 Items (Auto Ellipsis)
+        </h3>
         <SimpleBreadcrumb
           maxItems={4}
           items={[
@@ -248,8 +283,14 @@ export const WithOverflow: Story = {
             { label: 'Products', href: '/products' },
             { label: 'Electronics', href: '/products/electronics' },
             { label: 'Computers', href: '/products/electronics/computers' },
-            { label: 'Laptops', href: '/products/electronics/computers/laptops' },
-            { label: 'Gaming Laptops', href: '/products/electronics/computers/laptops/gaming' },
+            {
+              label: 'Laptops',
+              href: '/products/electronics/computers/laptops',
+            },
+            {
+              label: 'Gaming Laptops',
+              href: '/products/electronics/computers/laptops/gaming',
+            },
             { label: 'ASUS ROG', current: true },
           ]}
         />
@@ -264,7 +305,10 @@ export const WithOverflow: Story = {
             { label: 'Documentation', href: '/docs' },
             { label: 'Components', href: '/docs/components' },
             { label: 'Navigation', href: '/docs/components/navigation' },
-            { label: 'Breadcrumb', href: '/docs/components/navigation/breadcrumb' },
+            {
+              label: 'Breadcrumb',
+              href: '/docs/components/navigation/breadcrumb',
+            },
             { label: 'Examples', current: true },
           ]}
         />
@@ -275,8 +319,10 @@ export const WithOverflow: Story = {
 
 export const Interactive: Story = {
   render: () => {
-    const [currentPath, setCurrentPath] = React.useState('/products/electronics/smartphones')
-    
+    const [currentPath, setCurrentPath] = React.useState(
+      '/products/electronics/smartphones'
+    )
+
     const pathItems = [
       { label: 'Home', href: '/' },
       { label: 'Products', href: '/products' },
@@ -308,7 +354,7 @@ export const Interactive: Story = {
             onItemClick={handleItemClick}
           />
         </div>
-        
+
         <div className="pt-4 border-t">
           <p className="text-sm text-muted-foreground mb-2">
             Quick navigation:
@@ -327,7 +373,9 @@ export const Interactive: Story = {
               Go to Products
             </button>
             <button
-              onClick={() => setCurrentPath('/products/electronics/smartphones')}
+              onClick={() =>
+                setCurrentPath('/products/electronics/smartphones')
+              }
               className="px-3 py-1 text-sm bg-muted rounded hover:bg-muted/80"
             >
               Go to Smartphones
@@ -383,7 +431,11 @@ export const CustomSeparators: Story = {
         <SimpleBreadcrumb
           separator={
             <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+              <path
+                fillRule="evenodd"
+                d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                clipRule="evenodd"
+              />
             </svg>
           }
           items={[

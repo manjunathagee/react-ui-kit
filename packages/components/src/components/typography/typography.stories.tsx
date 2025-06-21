@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
+import * as React from 'react'
 import { Heading } from './heading'
 import { Text } from './text'
 import { Code, Pre } from './code'

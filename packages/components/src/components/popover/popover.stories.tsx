@@ -1,11 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react'
+import * as React from 'react'
 import { Button } from '../button'
-import { 
-  Popover, 
-  PopoverTrigger, 
-  PopoverContent, 
-  SimplePopover, 
-  RichPopover 
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  SimplePopover,
+  RichPopover,
 } from './popover'
 
 const meta: Meta<typeof Popover> = {
@@ -49,7 +50,7 @@ export const WithVariants: Story = {
           <p className="text-sm">Default variant popover</p>
         </PopoverContent>
       </Popover>
-      
+
       <Popover>
         <PopoverTrigger asChild>
           <Button variant="primary">Primary</Button>
@@ -58,7 +59,7 @@ export const WithVariants: Story = {
           <p className="text-sm">Primary variant popover</p>
         </PopoverContent>
       </Popover>
-      
+
       <Popover>
         <PopoverTrigger asChild>
           <Button variant="secondary">Secondary</Button>
@@ -67,7 +68,7 @@ export const WithVariants: Story = {
           <p className="text-sm">Secondary variant popover</p>
         </PopoverContent>
       </Popover>
-      
+
       <Popover>
         <PopoverTrigger asChild>
           <Button variant="ghost">Muted</Button>
@@ -85,37 +86,53 @@ export const WithSizes: Story = {
     <div className="flex gap-4">
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="outline" size="sm">Small</Button>
+          <Button variant="outline" size="sm">
+            Small
+          </Button>
         </PopoverTrigger>
         <PopoverContent size="sm">
-          <p className="text-sm">Small size popover with less padding and smaller width.</p>
+          <p className="text-sm">
+            Small size popover with less padding and smaller width.
+          </p>
         </PopoverContent>
       </Popover>
-      
+
       <Popover>
         <PopoverTrigger asChild>
           <Button variant="outline">Medium</Button>
         </PopoverTrigger>
         <PopoverContent size="md">
-          <p className="text-sm">Medium size popover (default) with standard padding and width.</p>
+          <p className="text-sm">
+            Medium size popover (default) with standard padding and width.
+          </p>
         </PopoverContent>
       </Popover>
-      
+
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="outline" size="lg">Large</Button>
+          <Button variant="outline" size="lg">
+            Large
+          </Button>
         </PopoverTrigger>
         <PopoverContent size="lg">
-          <p className="text-base">Large size popover with more padding and larger width for more content.</p>
+          <p className="text-base">
+            Large size popover with more padding and larger width for more
+            content.
+          </p>
         </PopoverContent>
       </Popover>
-      
+
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="outline" size="xl">Extra Large</Button>
+          <Button variant="outline" size="xl">
+            Extra Large
+          </Button>
         </PopoverTrigger>
         <PopoverContent size="xl">
-          <p className="text-base">Extra large size popover with maximum padding and width for extensive content.</p>
+          <p className="text-base">
+            Extra large size popover with maximum padding and width for
+            extensive content.
+          </p>
         </PopoverContent>
       </Popover>
     </div>
@@ -133,7 +150,7 @@ export const WithPositions: Story = {
           <p className="text-sm">Popover positioned at the top</p>
         </PopoverContent>
       </Popover>
-      
+
       <Popover>
         <PopoverTrigger asChild>
           <Button variant="outline">Right</Button>
@@ -142,7 +159,7 @@ export const WithPositions: Story = {
           <p className="text-sm">Popover positioned at the right</p>
         </PopoverContent>
       </Popover>
-      
+
       <Popover>
         <PopoverTrigger asChild>
           <Button variant="outline">Bottom</Button>
@@ -151,7 +168,7 @@ export const WithPositions: Story = {
           <p className="text-sm">Popover positioned at the bottom</p>
         </PopoverContent>
       </Popover>
-      
+
       <Popover>
         <PopoverTrigger asChild>
           <Button variant="outline">Left</Button>
@@ -180,7 +197,7 @@ export const SimplePopoverStory: Story = {
       >
         <Button variant="outline">Simple Popover</Button>
       </SimplePopover>
-      
+
       <SimplePopover
         content="This is just a text content"
         size="sm"
@@ -220,21 +237,27 @@ export const RichPopoverStory: Story = {
         }
         footer={
           <div className="flex justify-end gap-2">
-            <Button variant="outline" size="sm">Cancel</Button>
+            <Button variant="outline" size="sm">
+              Cancel
+            </Button>
             <Button size="sm">Save</Button>
           </div>
         }
       >
         <Button variant="outline">Rich Popover</Button>
       </RichPopover>
-      
+
       <RichPopover
         title="Confirmation"
         description="Are you sure you want to delete this item? This action cannot be undone."
         footer={
           <div className="flex justify-end gap-2">
-            <Button variant="outline" size="sm">Cancel</Button>
-            <Button variant="destructive" size="sm">Delete</Button>
+            <Button variant="outline" size="sm">
+              Cancel
+            </Button>
+            <Button variant="destructive" size="sm">
+              Delete
+            </Button>
           </div>
         }
         variant="default"
@@ -249,26 +272,26 @@ export const RichPopoverStory: Story = {
 export const ControlledPopover: Story = {
   render: () => {
     const [open, setOpen] = React.useState(false)
-    
+
     return (
       <div className="space-y-4">
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => setOpen(true)}
             disabled={open}
           >
             Open Popover
           </Button>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => setOpen(false)}
             disabled={!open}
           >
             Close Popover
           </Button>
         </div>
-        
+
         <SimplePopover
           open={open}
           onOpenChange={setOpen}
@@ -278,8 +301,8 @@ export const ControlledPopover: Story = {
               <p className="text-sm text-muted-foreground">
                 This popover is controlled by external state.
               </p>
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 onClick={() => setOpen(false)}
                 className="w-full"
               >
@@ -314,7 +337,10 @@ export const PopoverWithForm: Story = {
             />
           </div>
           <div>
-            <label htmlFor="description" className="block text-sm font-medium mb-1">
+            <label
+              htmlFor="description"
+              className="block text-sm font-medium mb-1"
+            >
               Description
             </label>
             <textarea
@@ -334,7 +360,9 @@ export const PopoverWithForm: Story = {
       }
       footer={
         <div className="flex justify-end gap-2">
-          <Button variant="outline" size="sm">Cancel</Button>
+          <Button variant="outline" size="sm">
+            Cancel
+          </Button>
           <Button size="sm">Add Item</Button>
         </div>
       }
