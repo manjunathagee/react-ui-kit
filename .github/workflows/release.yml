@@ -1,0 +1,450 @@
+name: Release Packages
+
+# Trigger manually or on release tags
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - prerelease
+      prerelease_tag:
+        description: 'Prerelease tag (for prerelease only)'
+        required: false
+        default: 'alpha'
+        type: choice
+        options:
+          - alpha
+          - beta
+          - rc
+      dry_run:
+        description: 'Dry run - do not publish or create releases'
+        required: false
+        default: false
+        type: boolean
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  # Validate and prepare release
+  prepare-release:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      is-prerelease: ${{ steps.version.outputs.is-prerelease }}
+      should-continue: ${{ steps.checks.outputs.should-continue }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Determine version and tag
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            # Extract version from tag
+            TAG=${GITHUB_REF#refs/tags/}
+            VERSION=${TAG#v}
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "tag=$TAG" >> $GITHUB_OUTPUT
+            echo "is-prerelease=false" >> $GITHUB_OUTPUT
+          else
+            # Manual release - calculate new version
+            CURRENT_VERSION=$(node -p "require('./package.json').version")
+            echo "Current version: $CURRENT_VERSION"
+
+            # Calculate new version based on release type
+            if [ "${{ github.event.inputs.release_type }}" = "prerelease" ]; then
+              NEW_VERSION=$(node -e "
+                const semver = require('semver');
+                const current = '$CURRENT_VERSION';
+                const tag = '${{ github.event.inputs.prerelease_tag }}';
+                console.log(semver.inc(current, 'prerelease', tag));
+              ")
+              echo "is-prerelease=true" >> $GITHUB_OUTPUT
+            else
+              NEW_VERSION=$(node -e "
+                const semver = require('semver');
+                console.log(semver.inc('$CURRENT_VERSION', '${{ github.event.inputs.release_type }}'));
+              ")
+              echo "is-prerelease=false" >> $GITHUB_OUTPUT
+            fi
+
+            echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+            echo "tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validation checks
+        id: checks
+        run: |
+          # Check if version already exists
+          VERSION="${{ steps.version.outputs.version }}"
+          TAG="${{ steps.version.outputs.tag }}"
+
+          echo "Checking if version $VERSION already exists..."
+
+          # Check git tags
+          if git tag -l | grep -q "^$TAG$"; then
+            echo "❌ Tag $TAG already exists in git"
+            echo "should-continue=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          # Check GitHub releases
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "❌ Release $TAG already exists on GitHub"
+            echo "should-continue=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          echo "✅ Version $VERSION is available"
+          echo "should-continue=true" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Build and test everything
+  build-and-test:
+    runs-on: ubuntu-latest
+    needs: prepare-release
+    if: needs.prepare-release.outputs.should-continue == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check all packages
+        run: pnpm typecheck
+
+      - name: Lint all packages
+        run: pnpm lint
+
+      - name: Test all packages
+        run: pnpm test
+
+      - name: Build all packages
+        run: pnpm build
+
+      - name: Build Storybook
+        run: pnpm build-storybook
+
+      - name: Generate package bundle analysis
+        run: |
+          echo "## 📦 Package Build Analysis" >> build-analysis.md
+          echo "" >> build-analysis.md
+          for pkg in packages/*/dist; do
+            if [ -d "$pkg" ]; then
+              package_name=$(basename $(dirname "$pkg"))
+              echo "### @react-ui-kit/$package_name" >> build-analysis.md
+              echo "\`\`\`" >> build-analysis.md
+              du -sh "$pkg"/* | head -10 >> build-analysis.md
+              echo "\`\`\`" >> build-analysis.md
+              echo "" >> build-analysis.md
+            fi
+          done
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            packages/*/dist
+            packages/components/storybook-static
+            build-analysis.md
+          retention-days: 7
+
+  # Create release and publish packages
+  release:
+    runs-on: ubuntu-latest
+    needs: [prepare-release, build-and-test]
+    if: needs.prepare-release.outputs.should-continue == 'true'
+    outputs:
+      published-packages: ${{ steps.publish.outputs.published-packages }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@react-ui-kit'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Configure git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Update package versions
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          VERSION="${{ needs.prepare-release.outputs.version }}"
+          echo "Updating all packages to version $VERSION"
+
+          # Update root package.json
+          node -e "
+            const pkg = require('./package.json');
+            pkg.version = '$VERSION';
+            require('fs').writeFileSync('./package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+
+          # Update all package.json files
+          for package_dir in packages/*/; do
+            if [ -f "$package_dir/package.json" ]; then
+              echo "Updating $(basename "$package_dir") to version $VERSION"
+              node -e "
+                const pkg = require('./$package_dir/package.json');
+                pkg.version = '$VERSION';
+                require('fs').writeFileSync('./$package_dir/package.json', JSON.stringify(pkg, null, 2) + '\n');
+              "
+            fi
+          done
+
+      - name: Build packages after version update
+        run: pnpm build
+
+      - name: Configure npm authentication
+        run: |
+          echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc
+          echo "@react-ui-kit:registry=https://npm.pkg.github.com" >> ~/.npmrc
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish packages (dry run)
+        if: github.event.inputs.dry_run == 'true'
+        run: |
+          echo "🚫 DRY RUN MODE - Packages will not be published"
+          echo ""
+          echo "Packages that would be published:"
+          for package_dir in packages/*/; do
+            if [ -f "$package_dir/package.json" ] && [ -d "$package_dir/dist" ]; then
+              package_name=$(node -p "require('./$package_dir/package.json').name")
+              package_version=$(node -p "require('./$package_dir/package.json').version")
+              echo "  📦 $package_name@$package_version"
+            fi
+          done
+
+      - name: Publish packages to GitHub Package Registry
+        if: github.event.inputs.dry_run != 'true'
+        id: publish
+        run: |
+          echo "📦 Publishing packages to GitHub Package Registry..."
+          PUBLISHED_PACKAGES=""
+
+          for package_dir in packages/*/; do
+            if [ -f "$package_dir/package.json" ] && [ -d "$package_dir/dist" ]; then
+              package_name=$(node -p "require('./$package_dir/package.json').name")
+              package_version=$(node -p "require('./$package_dir/package.json').version")
+
+              echo "Publishing $package_name@$package_version..."
+
+              cd "$package_dir"
+
+              if pnpm publish --no-git-checks --access public; then
+                echo "✅ Successfully published $package_name@$package_version"
+                PUBLISHED_PACKAGES="$PUBLISHED_PACKAGES- $package_name@$package_version\n"
+              else
+                echo "⚠️ Failed to publish $package_name@$package_version"
+              fi
+
+              cd ../..
+            fi
+          done
+
+          echo "published-packages<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$PUBLISHED_PACKAGES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit version changes and create tag
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'true'
+        run: |
+          VERSION="${{ needs.prepare-release.outputs.version }}"
+          TAG="${{ needs.prepare-release.outputs.tag }}"
+
+          # Commit version changes
+          git add .
+          git commit -m "chore: release $TAG" || echo "No changes to commit"
+
+          # Create and push tag
+          git tag "$TAG"
+          git push origin main
+          git push origin "$TAG"
+
+      - name: Generate release notes
+        id: release-notes
+        run: |
+          VERSION="${{ needs.prepare-release.outputs.version }}"
+
+          echo "## 🎉 React UI Kit v$VERSION" > release-notes.md
+          echo "" >> release-notes.md
+          echo "### 📦 Published Packages" >> release-notes.md
+          echo "" >> release-notes.md
+
+          for package_dir in packages/*/; do
+            if [ -f "$package_dir/package.json" ]; then
+              package_name=$(node -p "require('./$package_dir/package.json').name")
+              package_desc=$(node -p "require('./$package_dir/package.json').description || 'No description'")
+              echo "- **$package_name** - $package_desc" >> release-notes.md
+            fi
+          done
+
+          echo "" >> release-notes.md
+          echo "### 🚀 Installation" >> release-notes.md
+          echo "" >> release-notes.md
+          echo "\`\`\`bash" >> release-notes.md
+          echo "# Configure npm to use GitHub Package Registry" >> release-notes.md
+          echo "npm config set @react-ui-kit:registry https://npm.pkg.github.com" >> release-notes.md
+          echo "" >> release-notes.md
+          echo "# Install packages" >> release-notes.md
+          echo "npm install @react-ui-kit/components@$VERSION" >> release-notes.md
+          echo "npm install @react-ui-kit/design-tokens@$VERSION" >> release-notes.md
+          echo "npm install @react-ui-kit/utils@$VERSION" >> release-notes.md
+          echo "npm install @react-ui-kit/icons@$VERSION" >> release-notes.md
+          echo "\`\`\`" >> release-notes.md
+          echo "" >> release-notes.md
+          echo "### 📚 Documentation" >> release-notes.md
+          echo "" >> release-notes.md
+          echo "- [Storybook Documentation](https://685615b4675020c9c11b09a7-crlraeskec.chromatic.com/)" >> release-notes.md
+          echo "- [GitHub Repository](https://github.com/manjunathagee/react-ui-kit)" >> release-notes.md
+          echo "" >> release-notes.md
+
+          if [ "${{ needs.prepare-release.outputs.is-prerelease }}" = "true" ]; then
+            echo "### ⚠️ Prerelease Notice" >> release-notes.md
+            echo "" >> release-notes.md
+            echo "This is a prerelease version. Use with caution in production environments." >> release-notes.md
+            echo "" >> release-notes.md
+          fi
+
+          # Generate changelog from git commits since last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+          if [ -n "$LAST_TAG" ]; then
+            echo "### 📝 Changes since $LAST_TAG" >> release-notes.md
+            echo "" >> release-notes.md
+            echo "\`\`\`" >> release-notes.md
+            git log --oneline --pretty=format:"- %s (%h)" $LAST_TAG..HEAD >> release-notes.md
+            echo "" >> release-notes.md
+            echo "\`\`\`" >> release-notes.md
+          fi
+
+      - name: Create GitHub Release
+        if: github.event.inputs.dry_run != 'true'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.prepare-release.outputs.tag }}
+          release_name: 'React UI Kit ${{ needs.prepare-release.outputs.tag }}'
+          body_path: release-notes.md
+          draft: false
+          prerelease: ${{ needs.prepare-release.outputs.is-prerelease }}
+
+  # Post-release tasks
+  post-release:
+    runs-on: ubuntu-latest
+    needs: [prepare-release, release]
+    if: always() && needs.prepare-release.outputs.should-continue == 'true'
+    steps:
+      - name: Release summary
+        run: |
+          echo "## 🎉 Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ needs.prepare-release.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: ${{ needs.prepare-release.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Prerelease**: ${{ needs.prepare-release.outputs.is-prerelease }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dry Run**: ${{ github.event.inputs.dry_run }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release Status**: ${{ needs.release.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.release.result }}" = "success" ] && [ "${{ github.event.inputs.dry_run }}" != "true" ]; then
+            echo "### ✅ Successfully Released!" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Published Packages:**" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "${{ needs.release.outputs.published-packages }}" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Installation:**" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+            echo "npm config set @react-ui-kit:registry https://npm.pkg.github.com" >> $GITHUB_STEP_SUMMARY
+            echo "npm install @react-ui-kit/components@${{ needs.prepare-release.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            echo "### 🚫 Dry Run Completed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "No packages were actually published due to dry run mode." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ❌ Release Failed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Check the workflow logs for details." >> $GITHUB_STEP_SUMMARY
+          fi

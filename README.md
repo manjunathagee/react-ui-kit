@@ -13,6 +13,8 @@ This is a comprehensive React component library built with TypeScript, offering 
 
 ## 🚀 Quick Start
 
+### For Developers (Contributing)
+
 ```bash
 # Install dependencies
 pnpm install
@@ -35,6 +37,22 @@ pnpm build-storybook
 # Run Chromatic visual testing
 pnpm chromatic
 ```
+
+### For Users (Installing Packages)
+
+```bash
+# Configure npm for GitHub Package Registry
+npm config set @react-ui-kit:registry https://npm.pkg.github.com
+
+# Install the component library
+npm install @react-ui-kit/components
+
+# Import in your React app
+import { Button, Card } from '@react-ui-kit/components'
+import '@react-ui-kit/components/styles.css'
+```
+
+📖 **[Full Installation Guide](./INSTALLATION.md)** | 📦 **[Publishing Guide](./PUBLISHING.md)**
 
 ## ⚙️ Requirements
 

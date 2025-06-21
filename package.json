@@ -2,7 +2,7 @@
   "name": "react-ui-kit",
   "version": "0.1.0",
   "description": "A comprehensive React TypeScript component library",
-  "private": true,
+  "private": false,
   "packageManager": "pnpm@10.12.1",
   "scripts": {
     "build": "turbo run build",
@@ -18,6 +18,8 @@
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "turbo run build --filter=@react-ui-kit/* && changeset publish",
+    "publish-packages": "node scripts/publish-packages.js",
+    "publish-packages:dry-run": "node scripts/publish-packages.js --dry-run",
     "prepare": "husky install"
   },
   "devDependencies": {
@@ -42,5 +44,14 @@
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-avatar": "^1.1.10"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manjunathagee/react-ui-kit.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "public"
+  },
+  "license": "MIT"
 }

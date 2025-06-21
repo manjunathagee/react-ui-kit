@@ -1,0 +1,352 @@
+name: Publish Packages
+
+# Trigger on pushes to main that include version changes or manual dispatch
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/*/package.json'
+      - '.changeset/**'
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      dry_run:
+        description: 'Dry run (do not publish)'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
+
+jobs:
+  # Check if packages have changes and should be published
+  check-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      should-publish: ${{ steps.check.outputs.should-publish }}
+      changed-packages: ${{ steps.check.outputs.changed-packages }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check for changes
+        id: check
+        run: |
+          # Check if this is a manual dispatch
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "should-publish=true" >> $GITHUB_OUTPUT
+            echo "changed-packages=all" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Check if changeset files exist or package.json versions changed
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+          echo "Changed files: $CHANGED_FILES"
+
+          # Check for changeset changes
+          if echo "$CHANGED_FILES" | grep -q "\.changeset/"; then
+            echo "Changeset files detected"
+            echo "should-publish=true" >> $GITHUB_OUTPUT
+            echo "changed-packages=changeset" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Check for package.json version changes
+          CHANGED_PACKAGES=""
+          for pkg in packages/*/package.json; do
+            if echo "$CHANGED_FILES" | grep -q "$pkg"; then
+              PACKAGE_NAME=$(dirname "$pkg" | sed 's/packages\///')
+              CHANGED_PACKAGES="$CHANGED_PACKAGES $PACKAGE_NAME"
+            fi
+          done
+
+          if [ -n "$CHANGED_PACKAGES" ]; then
+            echo "Package version changes detected: $CHANGED_PACKAGES"
+            echo "should-publish=true" >> $GITHUB_OUTPUT
+            echo "changed-packages=$CHANGED_PACKAGES" >> $GITHUB_OUTPUT
+          else
+            echo "No publishable changes detected"
+            echo "should-publish=false" >> $GITHUB_OUTPUT
+            echo "changed-packages=" >> $GITHUB_OUTPUT
+          fi
+
+  # Build and test all packages
+  build-and-test:
+    runs-on: ubuntu-latest
+    needs: check-changes
+    if: needs.check-changes.outputs.should-publish == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build all packages
+        run: pnpm build
+
+      - name: Build Storybook
+        run: pnpm build-storybook
+
+  # Publish packages to GitHub Package Registry
+  publish:
+    runs-on: ubuntu-latest
+    needs: [check-changes, build-and-test]
+    if: needs.check-changes.outputs.should-publish == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Fetch full history for changeset
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@react-ui-kit'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build all packages
+        run: pnpm build
+
+      - name: Configure npm authentication
+        run: |
+          echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc
+          echo "@react-ui-kit:registry=https://npm.pkg.github.com" >> ~/.npmrc
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Manual version bump (if workflow_dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          # Configure git
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          # Bump versions using changeset
+          echo "---" > .changeset/release.md
+          echo "\"@react-ui-kit/components\": ${{ github.event.inputs.version_type }}" >> .changeset/release.md
+          echo "\"@react-ui-kit/design-tokens\": ${{ github.event.inputs.version_type }}" >> .changeset/release.md
+          echo "\"@react-ui-kit/utils\": ${{ github.event.inputs.version_type }}" >> .changeset/release.md
+          echo "\"@react-ui-kit/icons\": ${{ github.event.inputs.version_type }}" >> .changeset/release.md
+          echo "---" >> .changeset/release.md
+          echo "" >> .changeset/release.md
+          echo "Manual release triggered via workflow dispatch" >> .changeset/release.md
+
+          # Apply version changes
+          pnpm changeset version
+
+          # Commit version changes
+          git add .
+          git commit -m "chore: release packages [skip ci]" || echo "No changes to commit"
+          git push origin main
+
+      - name: Create Release Pull Request or Publish
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          title: "chore: release packages"
+          commit: "chore: release packages [skip ci]"
+          publish: pnpm publish-packages
+          version: pnpm version-packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish packages (dry run check)
+        if: github.event.inputs.dry_run == 'true'
+        run: |
+          echo "🚫 Dry run mode - packages would be published but were not due to dry_run flag"
+          echo "Packages that would be published:"
+          pnpm publish --dry-run --recursive --filter="@react-ui-kit/*"
+
+      - name: Publish packages to GitHub Package Registry
+        if: github.event.inputs.dry_run != 'true'
+        run: |
+          echo "📦 Publishing packages to GitHub Package Registry..."
+          
+          # Publish each package individually to handle failures gracefully
+          for package_dir in packages/*/; do
+            package_name=$(basename "$package_dir")
+            echo "Publishing @react-ui-kit/$package_name..."
+            
+            cd "$package_dir"
+            
+            # Check if package has been built
+            if [ ! -d "dist" ]; then
+              echo "❌ No dist directory found for $package_name, skipping..."
+              cd ../..
+              continue
+            fi
+            
+            # Try to publish
+            if pnpm publish --no-git-checks --access public; then
+              echo "✅ Successfully published @react-ui-kit/$package_name"
+            else
+              echo "⚠️ Failed to publish @react-ui-kit/$package_name (may already exist at this version)"
+            fi
+            
+            cd ../..
+          done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release
+        if: steps.changesets.outputs.published == 'true' && github.event.inputs.dry_run != 'true'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.changesets.outputs.publishedPackages[0].version }}
+          release_name: Release v${{ steps.changesets.outputs.publishedPackages[0].version }}
+          body: |
+            ## Published Packages
+            
+            ${{ steps.changesets.outputs.publishedPackages }}
+            
+            ## Changes
+            
+            See the [changelog](./CHANGELOG.md) for details.
+            
+            ## Installation
+            
+            ```bash
+            # Install from GitHub Package Registry
+            npm config set @react-ui-kit:registry https://npm.pkg.github.com
+            npm install @react-ui-kit/components
+            ```
+          draft: false
+          prerelease: false
+
+      - name: Comment on PR with publish results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { context } = require('@actions/github');
+            const publishedPackages = '${{ steps.changesets.outputs.publishedPackages }}';
+            const dryRun = '${{ github.event.inputs.dry_run }}' === 'true';
+            
+            let comment = '## 📦 Package Publish Results\n\n';
+            
+            if (dryRun) {
+              comment += '🚫 **Dry run mode** - No packages were actually published\n\n';
+            }
+            
+            if (publishedPackages) {
+              comment += '✅ **Successfully published packages:**\n\n';
+              comment += '```\n' + publishedPackages + '\n```\n\n';
+              comment += '### Installation\n\n';
+              comment += '```bash\n';
+              comment += 'npm config set @react-ui-kit:registry https://npm.pkg.github.com\n';
+              comment += 'npm install @react-ui-kit/components\n';
+              comment += '```\n';
+            } else {
+              comment += '⚠️ No packages were published (no version changes detected)\n';
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+  # Cleanup and notification
+  cleanup:
+    runs-on: ubuntu-latest
+    needs: [check-changes, build-and-test, publish]
+    if: always()
+    steps:
+      - name: Cleanup and summary
+        run: |
+          echo "## 📋 Publish Workflow Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Should Publish**: ${{ needs.check-changes.outputs.should-publish }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Changed Packages**: ${{ needs.check-changes.outputs.changed-packages }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Status**: ${{ needs.build-and-test.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Publish Status**: ${{ needs.publish.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.publish.result }}" = "success" ]; then
+            echo "🎉 **Packages successfully published to GitHub Package Registry!**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Installation Instructions" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+            echo "# Configure npm to use GitHub Package Registry for @react-ui-kit scope" >> $GITHUB_STEP_SUMMARY
+            echo "npm config set @react-ui-kit:registry https://npm.pkg.github.com" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "# Install packages" >> $GITHUB_STEP_SUMMARY
+            echo "npm install @react-ui-kit/components" >> $GITHUB_STEP_SUMMARY
+            echo "npm install @react-ui-kit/design-tokens" >> $GITHUB_STEP_SUMMARY
+            echo "npm install @react-ui-kit/utils" >> $GITHUB_STEP_SUMMARY
+            echo "npm install @react-ui-kit/icons" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
