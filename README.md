@@ -2,6 +2,7 @@
 
 [![Storybook](https://img.shields.io/badge/Storybook-Live-ff4785?style=flat&logo=storybook)](https://685615b4675020c9c11b09a7-crlraeskec.chromatic.com/)
 [![Chromatic](https://img.shields.io/badge/Chromatic-Visual%20Testing-fc521f?style=flat&logo=chromatic)](https://www.chromatic.com/build?appId=685615b4675020c9c11b09a7)
+[![Node.js](https://img.shields.io/badge/Node.js-22.16.0-339933?style=flat&logo=node.js)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18.3.1-61dafb?style=flat&logo=react)](https://reactjs.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4.17-38b2ac?style=flat&logo=tailwind-css)](https://tailwindcss.com/)
@@ -34,6 +35,12 @@ pnpm build-storybook
 # Run Chromatic visual testing
 pnpm chromatic
 ```
+
+## ⚙️ Requirements
+
+- **Node.js** ≥ 22.0.0 (LTS recommended)
+- **pnpm** ≥ 10.0.0 (for package management)
+- **Git** (for version control and Chromatic integration)
 
 ## 📦 Project Structure
 
