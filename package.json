@@ -10,8 +10,9 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "test:watch": "turbo run test:watch",
-    "storybook": "cd packages/components && npm run storybook",
-    "build-storybook": "cd packages/components && npm run build-storybook",
+    "storybook": "cd packages/components && pnpm run storybook",
+    "build-storybook": "cd packages/components && pnpm run build-storybook",
+    "chromatic": "cd packages/components && pnpm run chromatic",
     "typecheck": "turbo run typecheck",
     "clean": "turbo run clean",
     "changeset": "changeset",
@@ -20,10 +21,10 @@
     "prepare": "husky install"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.27.9",
+    "@changesets/cli": "^2.29.5",
     "husky": "^9.1.7",
-    "lint-staged": "^15.2.11",
-    "turbo": "^2.3.3"
+    "lint-staged": "^16.1.2",
+    "turbo": "^2.5.4"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

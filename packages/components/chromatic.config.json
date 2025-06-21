@@ -1,0 +1,11 @@
+{
+  "buildScriptName": "build-storybook",
+  "exitZeroOnChanges": true,
+  "exitOnceUploaded": false,
+  "skip": "dependabot/**",
+  "onlyChanged": true,
+  "externals": [
+    "public/**"
+  ],
+  "debug": false
+}

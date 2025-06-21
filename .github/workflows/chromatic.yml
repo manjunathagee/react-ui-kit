@@ -1,0 +1,65 @@
+name: Chromatic
+
+# Trigger on push to main and pull requests
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  chromatic:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Fetch all history for Chromatic to detect changes
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Run Chromatic
+        uses: chromaui/action@latest
+        with:
+          # Chromatic project token
+          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          # Working directory for the components package
+          workingDir: packages/components
+          # Build Storybook before running Chromatic
+          buildScriptName: build-storybook
+          # Exit with non-zero code if there are visual changes (for PR blocking)
+          exitZeroOnChanges: true
+          # Allow console errors (component errors won't fail the build)
+          allowConsoleErrors: true
+          # Skip Chromatic on dependency-only changes
+          skip: dependabot/**
+          # Only run on stories that have changed
+          onlyChanged: true

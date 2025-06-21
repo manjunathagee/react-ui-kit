@@ -1,5 +1,11 @@
 # React UI Kit - Developer Documentation
 
+[![Storybook](https://img.shields.io/badge/Storybook-Live-ff4785?style=flat&logo=storybook)](https://685615b4675020c9c11b09a7-crlraeskec.chromatic.com/)
+[![Chromatic](https://img.shields.io/badge/Chromatic-Visual%20Testing-fc521f?style=flat&logo=chromatic)](https://www.chromatic.com/build?appId=685615b4675020c9c11b09a7)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-18.3.1-61dafb?style=flat&logo=react)](https://reactjs.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4.17-38b2ac?style=flat&logo=tailwind-css)](https://tailwindcss.com/)
+
 ## Overview
 
 This is a comprehensive React component library built with TypeScript, offering 30+ production-ready components with full accessibility support, extensive testing, and Storybook documentation.
@@ -24,6 +30,9 @@ pnpm storybook
 
 # Build Storybook
 pnpm build-storybook
+
+# Run Chromatic visual testing
+pnpm chromatic
 ```
 
 ## 📦 Project Structure
@@ -56,6 +65,7 @@ react-ui-kit/
 - **Class Variance Authority (CVA)** - Variant-based component styling
 - **Vitest** - Testing framework
 - **Storybook** - Component documentation and development
+- **Chromatic** - Visual regression testing and component deployment
 
 ### Component Categories
 
@@ -272,14 +282,18 @@ pnpm test:coverage
 
 # Run specific test file
 pnpm test component-name.test.tsx
+
+# Run visual regression tests
+pnpm chromatic
 ```
 
 ### Test Categories
 
 1. **Unit Tests** - Individual component functionality
-2. **Integration Tests** - Component interactions
+2. **Integration Tests** - Component interactions  
 3. **Accessibility Tests** - ARIA and keyboard navigation
-4. **Visual Tests** - Storybook visual regression
+4. **Visual Regression Tests** - Chromatic automated visual testing
+5. **Cross-browser Tests** - Multi-browser compatibility via Chromatic
 
 ### Mock Strategy
 
@@ -332,6 +346,57 @@ export const Variants: Story = {
 - **Examples** - Common use cases and patterns
 - **Accessibility** - ARIA attributes and keyboard support
 - **Design Guidelines** - When and how to use components
+
+## 🎨 Visual Testing with Chromatic
+
+### Live Storybook
+
+View the live component library and interact with all components:
+
+**🔗 [Live Storybook](https://685615b4675020c9c11b09a7-crlraeskec.chromatic.com/)**
+
+### Chromatic Integration
+
+This project uses [Chromatic](https://www.chromatic.com/) for automated visual testing and component deployment:
+
+- **Visual Regression Testing** - Automatically detect UI changes
+- **Cross-browser Testing** - Test components across different browsers
+- **Automated Deployment** - Storybook deployed on every commit
+- **Review Workflow** - Visual changes require approval in PRs
+
+### Running Visual Tests
+
+```bash
+# Run Chromatic locally
+pnpm chromatic
+
+# Run with specific options
+CHROMATIC_PROJECT_TOKEN=your_token pnpm chromatic --dry-run
+```
+
+### Features
+
+- ✅ **280 Stories** captured across 20 components
+- ✅ **Automated CI/CD** integration with GitHub Actions  
+- ✅ **Visual Regression** detection on pull requests
+- ✅ **Browser Testing** across Chrome, Firefox, Safari
+- ✅ **Mobile Responsive** testing for all viewports
+
+### Setup
+
+1. Copy environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Add your Chromatic project token to `.env`:
+   ```bash
+   CHROMATIC_PROJECT_TOKEN=your_chromatic_token_here
+   ```
+
+3. For CI/CD, add the token to GitHub repository secrets as `CHROMATIC_PROJECT_TOKEN`
+
+> **Security Note**: Never commit actual tokens to version control. See [SECURITY.md](./SECURITY.md) for best practices.
 
 ## 🚀 Deployment
 
@@ -507,11 +572,18 @@ pnpm test -- --reporter=verbose component-name.test.tsx
 
 ## 📝 Additional Resources
 
-- [Storybook Documentation](http://localhost:6006)
+### Documentation
 - [Component API Reference](./API.md)
 - [Design Guidelines](./DESIGN.md)
 - [Accessibility Guide](./ACCESSIBILITY.md)
 - [Migration Guide](./MIGRATION.md)
+- [Security Guidelines](./SECURITY.md)
+- [Chromatic Integration Guide](./CHROMATIC.md)
+
+### Live Resources
+- **🔗 [Live Storybook](https://685615b4675020c9c11b09a7-crlraeskec.chromatic.com/)** - Interactive component library
+- **🔗 [Local Storybook](http://localhost:6006)** - Development environment
+- **🔗 [Chromatic Dashboard](https://www.chromatic.com/build?appId=685615b4675020c9c11b09a7)** - Visual testing results
 
 ## 🆘 Support
 

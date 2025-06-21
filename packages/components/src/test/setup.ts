@@ -25,7 +25,7 @@ console.error = (...args: any[]) => {
 }
 
 // Set React act environment flag
-global.IS_REACT_ACT_ENVIRONMENT = true
+;(global as any).IS_REACT_ACT_ENVIRONMENT = true
 
 // Mock ResizeObserver which is required by Radix UI components
 global.ResizeObserver = class ResizeObserver {
