@@ -51,6 +51,9 @@ importers:
 
   packages/components:
     dependencies:
+      '@manjunathagee/design-tokens':
+        specifier: workspace:*
+        version: link:../design-tokens
       '@radix-ui/react-accordion':
         specifier: ^1.2.11
         version: 1.2.11(@types/react-dom@19.1.6(@types/react@19.1.8))(@types/react@19.1.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -102,9 +105,6 @@ importers:
       '@radix-ui/react-tooltip':
         specifier: ^1.1.7
         version: 1.2.7(@types/react-dom@19.1.6(@types/react@19.1.8))(@types/react@19.1.8)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@react-ui-kit/design-tokens':
-        specifier: workspace:*
-        version: link:../design-tokens
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
