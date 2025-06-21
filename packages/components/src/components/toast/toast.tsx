@@ -134,8 +134,8 @@ const toastState: ToastState = {
   toasts: [],
 }
 
-let listeners: Array<(state: ToastState) => void> = []
-let toastTimeouts: Map<string, ReturnType<typeof setTimeout>> = new Map()
+const listeners: Array<(state: ToastState) => void> = []
+const toastTimeouts: Map<string, ReturnType<typeof setTimeout>> = new Map()
 
 function dispatch(action: { type: 'ADD_TOAST' | 'DISMISS_TOAST' | 'REMOVE_TOAST'; payload: any }) {
   switch (action.type) {

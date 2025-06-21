@@ -22,7 +22,7 @@ export function isValidUrl(url: string): boolean {
  * Phone number validation (basic)
  */
 export function isValidPhone(phone: string): boolean {
-  const phoneRegex = /^\+?[\d\s\-\(\)]{10,}$/
+  const phoneRegex = /^\+?[\d\s\-()]{10,}$/
   return phoneRegex.test(phone)
 }
 
@@ -60,7 +60,7 @@ export function getPasswordStrength(password: string): {
     feedback.push('Password should contain numbers')
   }
 
-  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+  if (/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>?]/.test(password)) {
     score += 1
   } else {
     feedback.push('Password should contain special characters')
