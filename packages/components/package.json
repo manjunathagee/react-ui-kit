@@ -1,5 +1,5 @@
 {
-  "name": "@react-ui-kit/components",
+  "name": "@manjunathagee/components",
   "version": "0.1.0",
   "description": "React UI Kit Components",
   "type": "module",
@@ -47,7 +47,7 @@
     "@radix-ui/react-tabs": "^1.1.7",
     "@radix-ui/react-toast": "^1.2.7",
     "@radix-ui/react-tooltip": "^1.1.7",
-    "@react-ui-kit/design-tokens": "workspace:*",
+    "@manjunathagee/design-tokens": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.519.0"

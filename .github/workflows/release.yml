@@ -224,7 +224,7 @@ jobs:
         with:
           node-version: '22'
           registry-url: 'https://npm.pkg.github.com'
-          scope: '@react-ui-kit'
+          scope: '@manjunathagee'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -275,7 +275,7 @@ jobs:
       - name: Configure npm authentication
         run: |
           echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc
-          echo "@react-ui-kit:registry=https://npm.pkg.github.com" >> ~/.npmrc
+          echo "@manjunathagee:registry=https://npm.pkg.github.com" >> ~/.npmrc
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -364,13 +364,13 @@ jobs:
           echo "" >> release-notes.md
           echo "\`\`\`bash" >> release-notes.md
           echo "# Configure npm to use GitHub Package Registry" >> release-notes.md
-          echo "npm config set @react-ui-kit:registry https://npm.pkg.github.com" >> release-notes.md
+          echo "npm config set @manjunathagee:registry https://npm.pkg.github.com" >> release-notes.md
           echo "" >> release-notes.md
           echo "# Install packages" >> release-notes.md
-          echo "npm install @react-ui-kit/components@$VERSION" >> release-notes.md
-          echo "npm install @react-ui-kit/design-tokens@$VERSION" >> release-notes.md
-          echo "npm install @react-ui-kit/utils@$VERSION" >> release-notes.md
-          echo "npm install @react-ui-kit/icons@$VERSION" >> release-notes.md
+          echo "npm install @manjunathagee/components@$VERSION" >> release-notes.md
+          echo "npm install @manjunathagee/design-tokens@$VERSION" >> release-notes.md
+          echo "npm install @manjunathagee/utils@$VERSION" >> release-notes.md
+          echo "npm install @manjunathagee/icons@$VERSION" >> release-notes.md
           echo "\`\`\`" >> release-notes.md
           echo "" >> release-notes.md
           echo "### 📚 Documentation" >> release-notes.md
@@ -436,8 +436,8 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "**Installation:**" >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-            echo "npm config set @react-ui-kit:registry https://npm.pkg.github.com" >> $GITHUB_STEP_SUMMARY
-            echo "npm install @react-ui-kit/components@${{ needs.prepare-release.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+            echo "npm config set @manjunathagee:registry https://npm.pkg.github.com" >> $GITHUB_STEP_SUMMARY
+            echo "npm install @manjunathagee/components@${{ needs.prepare-release.outputs.version }}" >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           elif [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
             echo "### 🚫 Dry Run Completed" >> $GITHUB_STEP_SUMMARY

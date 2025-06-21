@@ -162,7 +162,7 @@ jobs:
         with:
           node-version: '22'
           registry-url: 'https://npm.pkg.github.com'
-          scope: '@react-ui-kit'
+          scope: '@manjunathagee'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -178,7 +178,7 @@ jobs:
       - name: Configure npm authentication
         run: |
           echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc
-          echo "@react-ui-kit:registry=https://npm.pkg.github.com" >> ~/.npmrc
+          echo "@manjunathagee:registry=https://npm.pkg.github.com" >> ~/.npmrc
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -191,10 +191,10 @@ jobs:
 
           # Bump versions using changeset
           echo "---" > .changeset/release.md
-          echo "\"@react-ui-kit/components\": ${{ github.event.inputs.version_type }}" >> .changeset/release.md
-          echo "\"@react-ui-kit/design-tokens\": ${{ github.event.inputs.version_type }}" >> .changeset/release.md
-          echo "\"@react-ui-kit/utils\": ${{ github.event.inputs.version_type }}" >> .changeset/release.md
-          echo "\"@react-ui-kit/icons\": ${{ github.event.inputs.version_type }}" >> .changeset/release.md
+          echo "\"@manjunathagee/components\": ${{ github.event.inputs.version_type }}" >> .changeset/release.md
+          echo "\"@manjunathagee/design-tokens\": ${{ github.event.inputs.version_type }}" >> .changeset/release.md
+          echo "\"@manjunathagee/utils\": ${{ github.event.inputs.version_type }}" >> .changeset/release.md
+          echo "\"@manjunathagee/icons\": ${{ github.event.inputs.version_type }}" >> .changeset/release.md
           echo "---" >> .changeset/release.md
           echo "" >> .changeset/release.md
           echo "Manual release triggered via workflow dispatch" >> .changeset/release.md
@@ -224,7 +224,7 @@ jobs:
         run: |
           echo "🚫 Dry run mode - packages would be published but were not due to dry_run flag"
           echo "Packages that would be published:"
-          pnpm publish --dry-run --recursive --filter="@react-ui-kit/*"
+          pnpm publish --dry-run --recursive --filter="@manjunathagee/*"
 
       - name: Publish packages to GitHub Package Registry
         if: github.event.inputs.dry_run != 'true'
@@ -234,7 +234,7 @@ jobs:
           # Publish each package individually to handle failures gracefully
           for package_dir in packages/*/; do
             package_name=$(basename "$package_dir")
-            echo "Publishing @react-ui-kit/$package_name..."
+            echo "Publishing @manjunathagee/$package_name..."
             
             cd "$package_dir"
             
@@ -247,9 +247,9 @@ jobs:
             
             # Try to publish
             if pnpm publish --no-git-checks --access public; then
-              echo "✅ Successfully published @react-ui-kit/$package_name"
+              echo "✅ Successfully published @manjunathagee/$package_name"
             else
-              echo "⚠️ Failed to publish @react-ui-kit/$package_name (may already exist at this version)"
+              echo "⚠️ Failed to publish @manjunathagee/$package_name (may already exist at this version)"
             fi
             
             cd ../..
@@ -278,8 +278,8 @@ jobs:
             
             ```bash
             # Install from GitHub Package Registry
-            npm config set @react-ui-kit:registry https://npm.pkg.github.com
-            npm install @react-ui-kit/components
+            npm config set @manjunathagee:registry https://npm.pkg.github.com
+            npm install @manjunathagee/components
             ```
           draft: false
           prerelease: false
@@ -304,8 +304,8 @@ jobs:
               comment += '```\n' + publishedPackages + '\n```\n\n';
               comment += '### Installation\n\n';
               comment += '```bash\n';
-              comment += 'npm config set @react-ui-kit:registry https://npm.pkg.github.com\n';
-              comment += 'npm install @react-ui-kit/components\n';
+              comment += 'npm config set @manjunathagee:registry https://npm.pkg.github.com\n';
+              comment += 'npm install @manjunathagee/components\n';
               comment += '```\n';
             } else {
               comment += '⚠️ No packages were published (no version changes detected)\n';
@@ -340,13 +340,13 @@ jobs:
             echo "### Installation Instructions" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-            echo "# Configure npm to use GitHub Package Registry for @react-ui-kit scope" >> $GITHUB_STEP_SUMMARY
-            echo "npm config set @react-ui-kit:registry https://npm.pkg.github.com" >> $GITHUB_STEP_SUMMARY
+            echo "# Configure npm to use GitHub Package Registry for @manjunathagee scope" >> $GITHUB_STEP_SUMMARY
+            echo "npm config set @manjunathagee:registry https://npm.pkg.github.com" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "# Install packages" >> $GITHUB_STEP_SUMMARY
-            echo "npm install @react-ui-kit/components" >> $GITHUB_STEP_SUMMARY
-            echo "npm install @react-ui-kit/design-tokens" >> $GITHUB_STEP_SUMMARY
-            echo "npm install @react-ui-kit/utils" >> $GITHUB_STEP_SUMMARY
-            echo "npm install @react-ui-kit/icons" >> $GITHUB_STEP_SUMMARY
+            echo "npm install @manjunathagee/components" >> $GITHUB_STEP_SUMMARY
+            echo "npm install @manjunathagee/design-tokens" >> $GITHUB_STEP_SUMMARY
+            echo "npm install @manjunathagee/utils" >> $GITHUB_STEP_SUMMARY
+            echo "npm install @manjunathagee/icons" >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           fi
