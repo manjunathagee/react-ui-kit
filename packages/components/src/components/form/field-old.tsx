@@ -80,9 +80,10 @@ const Field = React.forwardRef<HTMLDivElement, FieldProps>(
             // Check if it's a Label component
             if (typeof child.type === 'function' && 
                 (child.type as any).displayName === 'Label') {
-              return React.cloneElement(child as React.ReactElement<any>, {
-                htmlFor: child.props.htmlFor || fieldId,
-                required: child.props.required ?? required,
+              const childElement = child as React.ReactElement<any>
+              return React.cloneElement(childElement, {
+                htmlFor: childElement.props.htmlFor || fieldId,
+                required: childElement.props.required ?? required,
               })
             }
             
@@ -97,10 +98,11 @@ const Field = React.forwardRef<HTMLDivElement, FieldProps>(
                                ['Input', 'Textarea', 'Select', 'Checkbox', 'RadioGroup', 'Switch'].includes(componentName)
             
             if (isFormInput) {
-              return React.cloneElement(child as React.ReactElement<any>, {
-                id: child.props.id || fieldId,
-                name: child.props.name || name,
-                required: child.props.required ?? required,
+              const childElement = child as React.ReactElement<any>
+              return React.cloneElement(childElement, {
+                id: childElement.props.id || fieldId,
+                name: childElement.props.name || name,
+                required: childElement.props.required ?? required,
                 'aria-invalid': error ? 'true' : undefined,
                 'aria-describedby': error 
                   ? `${fieldId}-error` 

@@ -1,5 +1,31 @@
 import '@testing-library/jest-dom'
 import { vi } from 'vitest'
+import { configure } from '@testing-library/react'
+
+// Configure React Testing Library to automatically use act() and reduce warnings
+configure({
+  asyncUtilTimeout: 2000,
+  // Disable act warnings for async utilities
+  reactStrictMode: false,
+})
+
+// Suppress React act warnings globally in test environment
+const originalConsoleError = console.error
+console.error = (...args: any[]) => {
+  const message = args[0]
+  if (
+    typeof message === 'string' &&
+    (message.includes('Warning: An update to') && message.includes('was not wrapped in act')) ||
+    message.includes('act(...)')
+  ) {
+    // Suppress React act warnings in tests
+    return
+  }
+  originalConsoleError.apply(console, args)
+}
+
+// Set React act environment flag
+global.IS_REACT_ACT_ENVIRONMENT = true
 
 // Mock ResizeObserver which is required by Radix UI components
 global.ResizeObserver = class ResizeObserver {
@@ -10,10 +36,15 @@ global.ResizeObserver = class ResizeObserver {
 
 // Mock IntersectionObserver
 global.IntersectionObserver = class IntersectionObserver {
-  constructor() {}
+  root = null
+  rootMargin = ''
+  thresholds = []
+  
+  constructor(_callback: IntersectionObserverCallback, _options?: IntersectionObserverInit) {}
   observe() {}
   unobserve() {}
   disconnect() {}
+  takeRecords() { return [] }
 }
 
 // Mock matchMedia

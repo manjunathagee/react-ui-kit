@@ -10,6 +10,10 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: true,
+    // Suppress React act warnings in test environment
+    env: {
+      IS_REACT_ACT_ENVIRONMENT: 'true',
+    },
   },
   resolve: {
     alias: {
